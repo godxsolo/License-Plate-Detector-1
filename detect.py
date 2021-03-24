@@ -12,6 +12,7 @@ from utils.box_utils import decode, decode_landm
 import time
 import torchvision
 import os
+from hyperlpr import *
 print(torch.__version__, torchvision.__version__)
 
 parser = argparse.ArgumentParser(description='RetinaPL')
@@ -88,13 +89,15 @@ if __name__ == '__main__':
     net.eval()
     print('Finished loading model!')
     cudnn.benchmark = True
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     net = net.to(device)
 
     resize = 1
 
     # testing begiN
-    contents = show_files("./imgs", [])
+    #contents = show_files("./imgs", [])
+    contents = show_files("../car/train/images", [])
     for img_name in contents:
         
         img_raw = cv2.imread(img_name, cv2.IMREAD_COLOR)
@@ -162,8 +165,8 @@ if __name__ == '__main__':
             for b in dets:
                 if b[4] < args.vis_thres:
                     continue
-                text = "{:.4f}".format(b[4])
-                print(text)
+                #text = "{:.4f}".format(b[4])
+                #print(text)
                 b = list(map(int, b))
                 cv2.rectangle(img_raw, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 2)
                 cx = b[0]
@@ -189,26 +192,28 @@ if __name__ == '__main__':
                 new_x2, new_y2 = b[11] - x1, b[12] - y1
                 new_x3, new_y3 = b[7] - x1, b[8] - y1
                 new_x4, new_y4 = b[5] - x1, b[6] - y1
-                print(new_x1, new_y1)
-                print(new_x2, new_y2)
-                print(new_x3, new_y3)
-                print(new_x4, new_y4)
+                #print(new_x1, new_y1)
+                #print(new_x2, new_y2)
+                #print(new_x3, new_y3)
+                #print(new_x4, new_y4)
                         
                 # 定义对应的点
                 points1 = np.float32([[new_x1, new_y1], [new_x2, new_y2], [new_x3, new_y3], [new_x4, new_y4]])
                 points2 = np.float32([[0, 0], [94, 0], [0, 24], [94, 24]])
                 
                 # 计算得到转换矩阵
-                #M = cv2.getPerspectiveTransform(points1, points2)
+                M = cv2.getPerspectiveTransform(points1, points2)
                 
                 # 实现透视变换转换
-                #processed = cv2.warpPerspective(img_box, M, (94, 24))
+                processed = cv2.warpPerspective(img_box, M, (94, 24))
                 img = img_raw[y1:y2,x1:x2]
                 # 显示原图和处理后的图像
-                #cv2.imshow("processed", img)  
+                #cv2.imshow("processed", img)
+                cv2.imshow("processedXX", processed) 
                 
             cv2.imwrite( "res.jpg",img_raw)
             cv2.imshow('image', img_raw)
+            print(HyperLPR_plate_recognition(img))
             if cv2.waitKey(1000000) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
 
